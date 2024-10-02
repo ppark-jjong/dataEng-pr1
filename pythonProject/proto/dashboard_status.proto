@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+message DashboardStatus {
+    int32 picked_count = 1;
+    int32 shipped_count = 2;
+    int32 pod_count = 3;
+    map<string, int32> sla_counts_today = 4;
+    repeated string issues_today = 5;
+}

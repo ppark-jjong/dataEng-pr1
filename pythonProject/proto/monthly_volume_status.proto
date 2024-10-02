@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+message MonthlyVolumeStatus {
+    map<string, int32> sla_counts_month = 1;      // SLA 타입별 배송 갯수
+    map<string, int32> weekday_counts = 2;  // 요일별 배송 갯수
+    map<int32, int32> distance_counts = 3;  // 거리별 배송 갯수
+}
