@@ -1,5 +1,10 @@
-google-api-python-client==2.86.0
+numpy==2.1.1
+pandas==2.2.3
+google-api-python-client==2.52.0
+google-auth==2.6.6
+google-auth-httplib2==0.1.0
 confluent-kafka==2.5.3
-protobuf==3.20.1
-pandas==2.0.3
-numpy==1.24.3
+protobuf==3.19.4
+loguru==0.5.3
+requests==2.26.0
+setuptools==68.2.0

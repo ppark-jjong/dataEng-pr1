@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+message MonthlyAnalysis {
+    float weekly_completion_rate = 1;  // 주별 완료율
+    map<string, int32> issue_pattern = 2;  // 요일별 이슈 발생 패턴
+    map<string, int32> sla_counts = 3;  // SLA 타입별, 요일별 배송 건수
+}

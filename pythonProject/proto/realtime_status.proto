@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+message RealtimeStatus {
+    int32 picked_count = 1;
+    int32 shipped_count = 2;
+    int32 pod_count = 3;
+    float completion_rate = 4;
+    float avg_delivery_time = 5;
+}

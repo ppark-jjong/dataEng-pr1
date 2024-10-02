@@ -1,63 +1,68 @@
-from pyspark.sql.functions import from_json, col
-from pyspark.sql.types import StructType, StructField, StringType, IntegerType, MapType
+from confluent_kafka import Consumer, KafkaError
 import logging
 from config_manager import ConfigManager
+from proto import realtime_status_pb2  # 실시간 상태
+from proto import weekly_analysis_pb2  # 이번 주 분석
+from proto import monthly_analysis_pb2  # 이번 달 분석
 
 config = ConfigManager()
 
-# 로깅 설정
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# 한글 로그 설정
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 logger = logging.getLogger(__name__)
 
-# Kafka에서 데이터를 읽어오는 스키마 정의
-dashboard_schema = StructType([
-    StructField("picked_count", IntegerType(), True),
-    StructField("shipped_count", IntegerType(), True),
-    StructField("pod_count", IntegerType(), True),
-    StructField("sla_counts_today", MapType(StringType(), IntegerType()), True),
-    StructField("issues_today", StringType(), True)
-])
 
-monthly_volume_schema = StructType([
-    StructField("sla_counts_month", MapType(StringType(), IntegerType()), True),
-    StructField("weekday_counts", MapType(StringType(), IntegerType()), True),
-    StructField("distance_counts", MapType(IntegerType(), IntegerType()), True)
-])
+class KafkaConsumer:
+    def __init__(self):
+        self.consumer = Consumer({
+            'bootstrap.servers': config.KAFKA_BOOTSTRAP_SERVERS,
+            'group.id': config.CONSUMER_GROUP_ID,
+            'auto.offset.reset': 'earliest'
+        })
 
-def process_batch(df, epoch_id, schema, file_name):
-    try:
-        df = df.select(from_json(col("value").cast("string"), schema).alias("data")).select("data.*")
-        pandas_df = df.toPandas()
-        save_to_excel(pandas_df, file_name)
-    except Exception as e:
-        logger.error(f"배치 처리 중 오류 발생: {e}")
+    def consume_messages(self):
+        self.consumer.subscribe([config.KAFKA_TOPICS['realtime_status'],
+                                 config.KAFKA_TOPICS['weekly_analysis'],
+                                 config.KAFKA_TOPICS['monthly_analysis']])
+        try:
+            while True:
+                msg = self.consumer.poll(1.0)
+                if msg is None:
+                    continue
+                if msg.error():
+                    if msg.error().code() == KafkaError._PARTITION_EOF:
+                        continue
+                    else:
+                        logger.error(f"Kafka 오류 발생: {msg.error()}")
+                        continue
 
-def save_to_excel(pandas_df, file_name):
-    file_path = config.get_excel_save_path(file_name)
-    pandas_df.to_excel(file_path, index=False)
-    logger.info(f"엑셀 파일로 저장 완료: {file_path}")
+                topic = msg.topic()
+                if topic == config.KAFKA_TOPICS['realtime_status']:
+                    proto_message = realtime_status_pb2.RealtimeStatus()
+                elif topic == config.KAFKA_TOPICS['weekly_analysis']:
+                    proto_message = weekly_analysis_pb2.WeeklyAnalysis()
+                elif topic == config.KAFKA_TOPICS['monthly_analysis']:
+                    proto_message = monthly_analysis_pb2.MonthlyAnalysis()
 
-def start_spark_consumer():
-    spark = config.get_spark_session()
+                proto_message.ParseFromString(msg.value())
+                self.process_message(topic, proto_message)
 
-    df_dashboard = spark.readStream.format("kafka") \
-        .option("kafka.bootstrap.servers", config.KAFKA_BOOTSTRAP_SERVERS) \
-        .option("subscribe", config.KAFKA_TOPICS['dashboard_status']) \
-        .option("startingOffsets", "earliest") \
-        .load()
+        except Exception as e:
+            logger.error(f"Kafka 컨슈머 오류 발생: {e}")
+        finally:
+            self.consumer.close()
 
-    query_dashboard = df_dashboard.writeStream \
-        .foreachBatch(lambda df, epoch_id: process_batch(df, epoch_id, dashboard_schema, "dashboard_status.xlsx")) \
-        .start()
-
-    df_monthly_volume = spark.readStream.format("kafka") \
-        .option("kafka.bootstrap.servers", config.KAFKA_BOOTSTRAP_SERVERS) \
-        .option("subscribe", config.KAFKA_TOPICS['monthly_volume_status']) \
-        .option("startingOffsets", "earliest") \
-        .load()
-
-    query_monthly_volume = df_monthly_volume.writeStream \
-        .foreachBatch(lambda df, epoch_id: process_batch(df, epoch_id, monthly_volume_schema, "monthly_volume_status.xlsx")) \
-        .start()
-
-    spark.streams.awaitAnyTermination()
+    def process_message(self, topic, proto_message):
+        if topic == config.KAFKA_TOPICS['realtime_status']:
+            logger.info(
+                f"실시간 배송 상태: 픽업 {proto_message.picked_count}건, 배송 {proto_message.shipped_count}건, POD {proto_message.pod_count}건")
+            logger.info(f"완료율: {proto_message.completion_rate:.2f}%")
+            logger.info(f"평균 배송 시간: {proto_message.avg_delivery_time}분")
+        elif topic == config.KAFKA_TOPICS['weekly_analysis']:
+            logger.info(f"이번 주 평균 배송 거리: {proto_message.avg_distance}km")
+            logger.info(f"이슈 발생 횟수: {proto_message.issue_count}")
+            logger.info(f"이슈 발생 DPS 목록: {proto_message.issues_dps}")
+        elif topic == config.KAFKA_TOPICS['monthly_analysis']:
+            logger.info(f"이번 달 완료율: {proto_message.weekly_completion_rate:.2f}%")
+            logger.info(f"요일별 이슈 발생 패턴: {proto_message.issue_pattern}")
+            logger.info(f"SLA 타입별, 요일별 배송 건수: {proto_message.sla_counts}")

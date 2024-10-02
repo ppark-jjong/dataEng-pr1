@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+message WeeklyAnalysis {
+    float avg_distance = 1;  // 평균 배송 거리
+    repeated string issues_dps = 2;  // 이슈가 발생한 DPS 번호 리스트
+    int32 issue_count = 3;  // 이슈 발생 횟수
+}
