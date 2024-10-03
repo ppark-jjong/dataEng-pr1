@@ -1,9 +1,10 @@
 from confluent_kafka import Producer
 import logging
 from config_manager import ConfigManager
-from proto import realtime_status_pb2  # 실시간 상태
-from proto import weekly_analysis_pb2  # 이번 주 분석
-from proto import monthly_analysis_pb2  # 이번 달 분석
+import proto.realtime_status_pb2 as realtime_status_pb2
+import proto.weekly_analysis_pb2 as weekly_analysis_pb2
+import proto.monthly_analysis_pb2 as monthly_analysis_pb2
+
 
 config = ConfigManager()
 

@@ -10,6 +10,7 @@ class ConfigManager:
         self.SHEET_ID = '1x4P2VO-ZArT7ibSYywFIBXUTapBhUnE4_ouVMKrKBwc'
         self.RANGE_NAME = 'Sheet1!A2:n637'
         self.SERVICE_ACCOUNT_FILE = '/app/oauth/google/credentials.json'
+        # self.SERVICE_ACCOUNT_FILE = 'C:/MyMain/dataEng/main/oauth/google/credentials.json'
 
         # Kafka 설정
         self.KAFKA_BOOTSTRAP_SERVERS = 'kafka:9092'

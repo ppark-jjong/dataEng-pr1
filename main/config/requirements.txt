@@ -1,0 +1,12 @@
+numpy==1.24.4
+pandas==1.5.3
+google-api-python-client==2.52.0
+google-auth==2.19.1
+google-auth-httplib2==0.1.0
+confluent-kafka==1.9.2
+protobuf==5.28.2
+google-auth-oauthlib==0.4.6
+loguru==0.6.0
+requests==2.31.0
+setuptools==68.2.0
+# grpcio-tools==1.54.0
