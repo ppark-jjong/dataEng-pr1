@@ -1,0 +1,31 @@
+version: '3'
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_BROKER_ID: 1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+
+  pyspark:
+    build:
+      context: .  # 현재 디렉토리에서 Dockerfile을 찾도록 설정 (docker/ 폴더 내에 Dockerfile이 있어야 함)
+      dockerfile: Dockerfile  # Dockerfile이 docker 폴더 내에 있다는 것을 명확히
+    volumes:
+      - ../src:/app/src  # src 폴더를 컨테이너에 매핑
+    ports:
+      - "8888:8888"
+    depends_on:
+      - kafka
