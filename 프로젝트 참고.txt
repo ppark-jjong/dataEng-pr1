@@ -29,9 +29,16 @@ docker-compose down
 
 # 도커 이미지 빌드
 docker-compose build
+docker build -f docker/Dockerfile -t my_custom_image_name:1.0 .
+
+
 
 # 도커 컨테이너 실행
 docker-compose up -d
+
+cd C:\MyMain\test\
+docker-compose -f docker/docker-compose.yaml up
+
 
 # 실행 상태 확인
 docker-compose ps
