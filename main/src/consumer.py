@@ -1,9 +1,12 @@
 from confluent_kafka import Consumer, KafkaError
 import logging
 from config_manager import ConfigManager
-from proto import realtime_status_pb2  # 실시간 상태
-from proto import weekly_analysis_pb2  # 이번 주 분석
-from proto import monthly_analysis_pb2  # 이번 달 분석
+from proto import realtime_status_pb2
+from proto import weekly_analysis_pb2
+from proto import monthly_analysis_pb2
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import from_json, col
+from pyspark.sql.types import StringType, StructType, StructField
 
 config = ConfigManager()
 
@@ -11,12 +14,11 @@ config = ConfigManager()
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 logger = logging.getLogger(__name__)
 
-
 class KafkaConsumer:
     def __init__(self):
         self.consumer = Consumer({
             'bootstrap.servers': config.KAFKA_BOOTSTRAP_SERVERS,
-            'group.id': config.CONSUMER_GROUP_ID,
+            'group.id': 'my_consumer_group',
             'auto.offset.reset': 'earliest'
         })
 
@@ -37,6 +39,8 @@ class KafkaConsumer:
                         continue
 
                 topic = msg.topic()
+                logger.info(f"{topic} 토픽에서 메시지를 수신함")
+
                 if topic == config.KAFKA_TOPICS['realtime_status']:
                     proto_message = realtime_status_pb2.RealtimeStatus()
                 elif topic == config.KAFKA_TOPICS['weekly_analysis']:
@@ -66,3 +70,37 @@ class KafkaConsumer:
             logger.info(f"이번 달 완료율: {proto_message.weekly_completion_rate:.2f}%")
             logger.info(f"요일별 이슈 발생 패턴: {proto_message.issue_pattern}")
             logger.info(f"SLA 타입별, 요일별 배송 건수: {proto_message.sla_counts}")
+
+# PySpark 데이터 처리 로직
+def process_with_pyspark():
+    spark = SparkSession.builder \
+        .appName("Kafka PySpark Integration") \
+        .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.1.1") \
+        .getOrCreate()
+
+    logger.info("PySpark 세션 시작")
+
+    df = spark.readStream \
+        .format("kafka") \
+        .option("kafka.bootstrap.servers", config.KAFKA_BOOTSTRAP_SERVERS) \
+        .option("subscribe", config.KAFKA_TOPICS['realtime_status']) \
+        .load()
+
+    schema = StructType([
+        StructField("picked_count", StringType(), True),
+        StructField("shipped_count", StringType(), True),
+        StructField("pod_count", StringType(), True),
+        StructField("completion_rate", StringType(), True),
+        StructField("avg_delivery_time", StringType(), True)
+    ])
+
+    df.selectExpr("CAST(value AS STRING)") \
+        .select(from_json(col("value"), schema).alias("data")) \
+        .select("data.*") \
+        .writeStream \
+        .outputMode("append") \
+        .format("console") \
+        .start() \
+        .awaitTermination()
+
+    logger.info("PySpark 데이터 스트리밍 작업 완료")

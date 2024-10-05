@@ -5,7 +5,6 @@ import proto.realtime_status_pb2 as realtime_status_pb2
 import proto.weekly_analysis_pb2 as weekly_analysis_pb2
 import proto.monthly_analysis_pb2 as monthly_analysis_pb2
 
-
 config = ConfigManager()
 
 class KafkaProducer:
@@ -14,7 +13,9 @@ class KafkaProducer:
 
     def delivery_report(self, err, msg):
         if err is not None:
-            logging.error(f"메시지 전송 실패: {err}")
+            logging.error(f"메시지 전송 실패: {err}, 재시도 중...")
+            # 전송 실패 시 재시도
+            self.producer.produce(msg.topic(), value=msg.value(), callback=self.delivery_report)
         else:
             logging.info(f"메시지 전송 성공: {msg.topic()}")
 
@@ -42,9 +43,10 @@ class KafkaProducer:
                 )
 
             # 직렬화 후 Kafka로 전송
-            self.producer.produce(topic, value=proto_message.SerializeToString(), callback=self.delivery_report)
+            serialized_message = proto_message.SerializeToString()
+            logging.info(f"{topic} 토픽으로 전송할 데이터 직렬화 완료")
+            self.producer.produce(topic, value=serialized_message, callback=self.delivery_report)
             self.producer.poll(1)
-            logging.info(f"{topic} 토픽으로 데이터 전송 성공")
         except Exception as e:
             logging.error(f"Kafka로 {topic} 데이터 전송 중 오류 발생: {e}")
 

@@ -21,6 +21,8 @@ taskkill /f /pid PID번호
 
 protoc -I=protos --python_out=protos protos/delivery_status.proto
 
+
+protoc --proto_path=. -I . --python_out=. --pyi_out=. ./realtime_status.proto
 ==================================================================
 
 
