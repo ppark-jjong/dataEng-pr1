@@ -15,6 +15,9 @@ class ConfigManager:
         # Kafka 설정
         self.KAFKA_BOOTSTRAP_SERVERS = 'kafka:9092'
         self.KAFKA_TOPICS = {
+            'realtime_status': 'realtime_status',
+            'weekly_analysis': 'weekly_analysis',
+            'monthly_analysis': 'monthly_analysis',
             'dashboard_status': 'dashboard_status',
             'monthly_volume_status': 'monthly_volume_status'
         }
