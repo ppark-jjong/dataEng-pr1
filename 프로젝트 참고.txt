@@ -74,9 +74,12 @@ docker exec -it kafka kafka-topics --list --bootstrap-server localhost:9092
 	├── proto/
 	│   ├── realtime_status.proto
 	│   ├── realtime_status_pb2.py
+	│   ├── realtime_status_pb2.pyi
 	│   ├── monthly_analysis.proto
 	│   ├── monthly_analysis_pb2.py
+	│   ├── monthly_analysis_pb2.pyi
 	│   ├── weekly_analysis_pb2.py
+	│   ├── weekly_analysis_pb2.pyi
 	│   ├── weekly_analysis.proto
 	├── kafka/
 	│   ├── docker-compose.yaml
