@@ -51,7 +51,6 @@ docker-compose logs -f
 docker-compose build --no-cache
 docker-compose up
 
-
 =============================================================
 # Kafka CLI 명령어를 사용하여 토픽 목록 조회
 docker exec -it kafka kafka-topics --list --bootstrap-server localhost:9092
