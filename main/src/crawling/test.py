@@ -17,11 +17,7 @@ def read_excel(filepath, sheet_name):
 
 def get_raw_data():
     raw_data_file = (
-<<<<<<< HEAD:main/Inbound_analysis/test.py
-        "C:/MyMain/Teckwah/download/xlsx_files/3.012_CS_Receiving_TAT_Report_accumulated.xlsx"
-=======
         "C:/MyMain/Teckwah/download/xlsx_files/240727_240802_ReceivingTAT_report.xlsx"
->>>>>>> origin/main:data_dev/Inbound_analysis/test.py
     )
 
     return read_excel(raw_data_file, "CS Receiving TAT")
@@ -30,7 +26,7 @@ def get_raw_data():
 def get_db_data(start_date, end_date):
     try:
         conn = mysql.connector.connect(**DB_CONFIG)
-        if conn.is_connected():
+        if conn.is_co2nnected():
             cursor = conn.cursor(dictionary=True)
             query = f"""
             SELECT * FROM {RECEIVING_TAT_REPORT_TABLE}

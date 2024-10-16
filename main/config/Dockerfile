@@ -28,7 +28,7 @@ COPY config/requirements.txt /app/config/requirements.txt
 RUN pip install --no-cache-dir -r /app/config/requirements.txt
 
 # 어플리케이션 파일 복사
-COPY . .
+COPY ../kafka .
 
 # Docker 컨테이너에서 실행될 명령어 설정
 CMD ["python", "/app/src/main.py"]
