@@ -24,9 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 def setup_config() -> Dict[str, Any]:
-    """
-    설정 정보를 반환합니다.
-    """
+
     return {
         "DOWNLOAD_FOLDER": DOWNLOAD_FOLDER,
         "COMPLETE_FOLDER": COMPLETE_FOLDER,
@@ -37,9 +35,7 @@ def setup_config() -> Dict[str, Any]:
 
 
 def get_user_input() -> str:
-    """
-    사용자로부터 파일 이름을 입력받습니다.
-    """
+
     return input("처리할 파일 이름을 입력하세요 (확장자 포함): ")
 
 

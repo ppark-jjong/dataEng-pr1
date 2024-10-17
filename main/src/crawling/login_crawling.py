@@ -16,9 +16,6 @@ from selenium.common.exceptions import (
 )
 
 def initialize_driver(download_folder):
-    """
-    웹 드라이버를 초기화합니다.
-    """
     chrome_options = Options()
     prefs = {
         "download.default_directory": download_folder,
@@ -31,9 +28,6 @@ def initialize_driver(download_folder):
     return driver
 
 def login(driver, username, password):
-    """
-    웹사이트에 로그인합니다.
-    """
     driver.get("https://cs.vinfiniti.biz:8227/")
     try:
         WB(driver, 10).until(
@@ -68,9 +62,6 @@ def login(driver, username, password):
         exit(1)
 
 def search_report(driver):
-    """
-    리포트를 검색합니다.
-    """
     try:
         WB(driver, 10).until(EC.presence_of_element_located((By.ID, "ext-comp-1003")))
         time.sleep(5)
